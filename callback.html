@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mentally On Break — Sign-in callback</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #0f0f14; color: #f2f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 1rem; }
+  .card { max-width: 560px; width: 100%; background: #1a1a22; border-radius: 16px; padding: 2rem; box-shadow: 0 8px 32px rgba(0,0,0,.5); text-align: center; }
+  h1 { font-size: 1.4rem; margin: 0 0 .5rem; }
+  p { color: #b9b9c4; line-height: 1.5; }
+  .code-box { background: #0a0a0e; border: 1px dashed #55556a; border-radius: 10px; padding: 1rem; margin: 1rem 0; font-family: ui-monospace, monospace; font-size: .95rem; word-break: break-all; color: #9fe8a9; min-height: 2.5em; }
+  button { background: #fe2c55; color: #fff; border: none; border-radius: 999px; padding: .7rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; }
+  button:hover { background: #e6254b; }
+  .ok { color: #9fe8a9; }
+  .err { color: #ff8a8a; }
+  .tiny { font-size: .8rem; color: #77778a; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>&#x1F4A4; Mentally On Break</h1>
+  <p id="status">Reading the sign-in result&hellip;</p>
+  <div class="code-box" id="codebox" style="display:none"></div>
+  <button id="copybtn" style="display:none">Copy code</button>
+  <p class="tiny">This page never sends your code anywhere. Keep this tab to yourself &mdash; the code is single-use and expires quickly.</p>
+</div>
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var status = document.getElementById('status');
+  var codebox = document.getElementById('codebox');
+  var copybtn = document.getElementById('copybtn');
+
+  var error = params.get('error');
+  var code = params.get('code');
+
+  if (error) {
+    status.innerHTML = '<span class="err">Sign-in was not completed.</span><br>TikTok reported: ' +
+      escapeHtml(params.get('error_description') || error);
+    return;
+  }
+  if (!code) {
+    status.textContent = 'No sign-in code arrived. This page only works when TikTok sends you here after you approve the connection.';
+    return;
+  }
+  status.innerHTML = '<span class="ok">Connected! &#x2705;</span><br>Copy this code and send it to Leedle:';
+  codebox.textContent = code;
+  codebox.style.display = 'block';
+  copybtn.style.display = 'inline-block';
+  copybtn.addEventListener('click', function () {
+    var done = function () { copybtn.textContent = 'Copied!'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(done, function () { fallbackCopy(code); done(); });
+    } else { fallbackCopy(code); done(); }
+  });
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+</body>
+</html>
